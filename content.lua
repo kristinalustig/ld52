@@ -21,6 +21,7 @@ local nightScreen --image
 local seedChoiceScreen --image
 local fairScreen --image
 local scoreScreen --image TODO
+local doneBadge --quad
 
 --sprite quad tables
 local cropQuads = {}
@@ -52,6 +53,9 @@ local crops = {}
 local scarecrow = {}
 local currentlyHighlighted
 local currentCrops = {}
+local plantNeedBadges = {}
+local timeLeftBadges = {}
+local resultBadges = {}
 
 function C.init()
   
@@ -71,11 +75,14 @@ function C.init()
   nightScreen = lg.newImage("/assets/night-screen.png")
   seedChoiceScreen = lg.newImage("/assets/seed-choice-screen.png")
   
+  doneBadge = lg.newQuad(0, 0, 80, 80, 720, 160)
+  
   plantFont = lg.newFont("/assets/Jua-Regular.ttf", 20)
   dialogFont = lg.newFont("/assets/Acme-Regular.ttf", 20)
   
   InitCropQuads()
   InitFruitQuads()
+  InitPlantBadges()
   
   InitObjectPlacement()
   
@@ -89,6 +96,8 @@ function C.update()
   
   CheckHoverStates(mx, my)
   
+  currentCrops = F.getCurrentPlantInfo()
+  
 end
 
 function C.draw()
@@ -99,6 +108,70 @@ function C.draw()
     if currentlyHighlighted then
       HighlightObject()
     end
+  
+    local xOffset = 30
+    local yOffset = 40
+    for k, v in ipairs(currentCrops) do
+      local img = cropQuads[((v.cropNum-1)*6) + v.plantStage]
+      if v.isDragging and v.plantStage >= 5 then
+        img = cropQuads[((v.cropNum-1)*6) + 4]
+        lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], lm.getX(), lm.getY())
+      end
+      lg.draw(cropSprites, img, crops[k].x-5, crops[k].y-5)
+      if v.currentNeed ~= nil then
+        local b = 3
+        if v.currentNeed == "water" then
+          b = 1
+        elseif v.currentNeed == "fertilizer" then
+          b = 2
+        end
+        
+        lg.draw(cropBadges, plantNeedBadges[b], crops[k].x + xOffset, crops[k].y + yOffset)
+        lg.setColor(1, 1, 1, .5)
+        lg.draw(cropBadges, timeLeftBadges[GetTimeLeftBadge(v.timeLeft)], crops[k].x + xOffset, crops[k].y + yOffset)
+        lg.reset()
+      end
+      if v.showBadgeTimer > 0 then
+        lg.draw(cropBadges, resultBadges[v.badgeState], crops[k].x + xOffset, crops[k].y + yOffset)
+      end
+      if v.harvested then
+        lg.draw(cropBadges, doneBadge, crops[k].x + xOffset, crops[k].y + yOffset)
+      end
+    end
+    
+    lg.setFont(dialogFont)
+    lg.printf(math.floor(F.getTimeLeft()), 610, 529, 50, "left")
+    
+    local cd = F.getCurrentlyDragging()
+    if cd ~= nil then
+      ShowDraggingItem(cd)
+    end
+    
+  end
+  
+end
+
+function GetTimeLeftBadge(t)
+  
+  local tpt = F.getTimePerTask()
+  t = tpt - t
+  for i = 1, 8 do
+    if t <= (tpt/8)*i then
+      return i
+    end
+  end
+  
+  
+end
+
+function GetFruit(n, p)
+  
+  if p == 3 then 
+    return n + 6
+  elseif p == 5 then
+    return n
+  else
+    return n + 3
   end
   
 end
@@ -124,6 +197,63 @@ function CheckHoverStates(mx, my)
     end
     
     currentlyHighlighted = nil
+  end
+  
+end
+
+function ShowDraggingItem(obj)
+  
+  if obj == "fertilizer" then
+    lg.draw(manureBlob, lm.getX(), lm.getY())
+  elseif obj == "water" then
+    lg.draw(waterBlob, lm.getX(), lm.getY())
+  elseif obj == "crop" then
+    
+  end
+  
+end
+
+
+function C.handleMouseClick(mx, my)
+  
+  --truck
+  if U.detectOverlap(truck.x, truck.y, truck.x2, truck.y2, mx, my) then
+    F.handleMouseClick("truck", nil)
+  --dog
+  elseif U.detectOverlap(dog.x, dog.y, dog.x2, dog.y2, mx, my) then
+    F.handleMouseClick("dog", nil)
+  --scarecrow
+  elseif U.detectOverlap(scarecrow.x, scarecrow.y, scarecrow.x2, scarecrow.y2, mx, my) then
+    F.handleMouseClick("scarecrow", nil)
+    --well
+  elseif U.detectOverlap(well.x, well.y, well.x2, well.y2, mx, my) then
+    F.handleMouseClick("well", nil)
+  --crops
+  else
+    for k, v in ipairs(crops) do
+      if U.detectOverlap(v.x, v.y, v.x2, v.y2, mx, my) then
+        F.handleMouseClick("crop", k)
+        return
+      end
+    end
+  end
+  
+end
+
+function C.handleMouseRelease(mx, my)
+  
+  --barn
+  if U.detectOverlap(barn.x, barn.y, barn.x2, barn.y2, mx, my) then
+    F.handleMouseRelease("barn", nil)
+  --crops
+  else
+    for k, v in ipairs(crops) do
+      if U.detectOverlap(v.x, v.y, v.x2, v.y2, mx, my) then
+        F.handleMouseRelease("crop", k)
+        return
+      end
+    end
+    F.handleMouseRelease("none", nil)
   end
   
 end
@@ -194,6 +324,24 @@ function InitObjectPlacement()
         y2 = cropY + ((i-1)*160) + 120
       })
     end
+  end
+  
+end
+
+function InitPlantBadges()
+  
+  table.insert(plantNeedBadges, lg.newQuad(80, 0, 80, 80, 720, 160))
+  table.insert(plantNeedBadges, lg.newQuad(160, 0, 80, 80, 720, 160))
+  table.insert(plantNeedBadges, lg.newQuad(240, 0, 80, 80, 720, 160))
+  
+  table.insert(resultBadges, lg.newQuad(320, 0, 80, 80, 720, 160))
+  table.insert(resultBadges, lg.newQuad(400, 0, 80, 80, 720, 160))
+  table.insert(resultBadges, lg.newQuad(480, 0, 80, 80, 720, 160))
+  table.insert(resultBadges, lg.newQuad(560, 0, 80, 80, 720, 160))
+  table.insert(resultBadges, lg.newQuad(640, 0, 80, 80, 720, 160))
+  
+  for i=0, 7 do
+    table.insert(timeLeftBadges, lg.newQuad(i*80, 80, 80, 80, 720, 160))
   end
   
 end

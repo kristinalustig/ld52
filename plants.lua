@@ -27,22 +27,39 @@ function P.createPlant(plantType)
   tempTable.needMet = false
   tempTable.tasksCompleted = 0
   tempTable.plantStage = 1
-  tempTable.showBadgeTimer = 2
+  tempTable.showBadgeTimer = 0
+  tempTable.badgeState = nil
+  tempTable.cropNum = GetCropNum(plantType)
+  tempTable.harvested = false
   
   id = id + 1
+  
+  return tempTable
   
 end
 
 function GetPlantNeeds()
   
-  local modifier1 = love.math.random(4)
-  local modifier2 = love.math.random(4)
+  local modifier1 = math.random(2, 3)
+  local modifier2 = math.random(2, 3)
   
   local tempTable = {}
   tempTable.water = modifier1
   tempTable.fertilizer = modifier2
   
   return tempTable
+  
+end
+
+function GetCropNum(plantType)
+  
+  if plantType == "noun" then
+    return 1
+  elseif plantType == "ad" then
+    return 2
+  elseif plantType == "verb" then
+    return 3
+  end
   
 end
 

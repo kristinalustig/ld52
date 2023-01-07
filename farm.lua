@@ -6,19 +6,23 @@ F = {}
 local timePerRound --int
 local timeLeft --int
 local currentlyDragging --object
-local plantsGrowing --objects table
+local plantsGrowing = {} --objects table
 local isDialogShowing --bool
 local currentTheme
 local farmName
+local startTime
+local timePerTask
 
 function F.init()
   
+  startTime = love.timer.getTime()
   timePerRound = 60
   timeLeft = timePerRound
   currentlyDragging = nil
   isDialogShowing = false
   currentTheme = 1
   plantsGrowing = InitFirstPlants()
+  timePerTask = 7
   
 end
 
@@ -28,19 +32,82 @@ function F.update()
   --update the plants as necessary
   UpdatePlantNeeds()
   
+  timeLeft = timePerRound + (startTime - love.timer.getTime())
+  
 end
 
 
 --called from main depending on current scene
-function F.handleMouseClick(mx, my)
-  
-  
-  
+function F.handleMouseClick(obj, num)
+
+  if obj == "truck" then
+    currentlyDragging = "fertilizer"
+  elseif obj == "well" then
+    currentlyDragging = "water"
+  elseif obj == "dog" then
+  elseif obj == "scarecrow" then
+  elseif obj == "crop" then
+    currentlyDragging = "crop"
+    plantsGrowing[num].isDragging = true
+  end
+
 end
 
 --called from main depending on current scene
-function F.handleMouseRelease(mx, my)
+function F.handleMouseRelease(obj, num)
   
+  
+  local p = nil
+  if num ~= nil then
+    p = plantsGrowing[num]
+  elseif currentlyDragging == "crop" then
+    for k, v in ipairs(plantsGrowing) do
+      if v.isDragging == true then
+        p = v
+        v.isDragging = false
+      end
+    end
+  end
+  
+  if obj == "none" then
+    currentlyDragging = nil
+  elseif obj == "barn" then
+    if currentlyDragging == "crop" then
+      if p.currentNeed == "harvest" then
+        p.needMet = true
+      end
+    end
+  elseif obj == "crop" then
+    if currentlyDragging == "water" then
+      --play a sound
+      if p.currentNeed == "water" and p.timeLeft >= 0 then
+        p.needMet = true
+      end
+    elseif currentlyDragging == "fertilizer" and p.timeLeft >= 0 then 
+      --play a sound
+      if p.currentNeed == "fertilizer" then
+        p.needMet = true
+      end
+    end
+  end
+  
+  currentlyDragging = nil
+  
+end
+
+function F.getCurrentlyDragging()
+  
+  return currentlyDragging
+  
+end
+
+function F.getTimePerTask()
+  
+  return timePerTask
+  
+end
+
+function EndRound()
   
 end
 
@@ -60,7 +127,7 @@ end
 
 function InitFirstPlants()
   
-  plantsGrowing = 
+  local tempTable = 
   {
     P.createPlant("noun"),
     P.createPlant("noun"),
@@ -70,6 +137,8 @@ function InitFirstPlants()
     P.createPlant("verb")
   }
   
+  return tempTable
+  
 end
 
 function UpdatePlantNeeds()
@@ -78,18 +147,14 @@ function UpdatePlantNeeds()
     if timePerRound - timeLeft > v.initialDelay then
       if v.currentNeed == nil then
         local r = love.math.random(2)
-        if r == 1 and tempTable.water > 1 then
-          tempTable.water = tempTable.water - 1
+        if r == 1 and v.needs.water >= 1 then
           v.currentNeed = "water"
-          v.initialDelay = v.initialDelay + 4 + love.math.random(10)
           v.timer = love.timer.getTime()
-        elseif r == 2 and tempTable.fertilizer > 1 then
-          tempTable.fertilizer = tempTable.fertilizer - 1
+        elseif r == 2 and v.needs.fertilizer >= 1 then
           v.currentNeed = "fertilizer"
-          v.initialDelay = v.initialDelay + 6 + love.math.random(10)
           v.timer = love.timer.getTime()
-        else
-          v.currentNeed == "harvest"
+        elseif v.needs.fertilizer == 0 and v.needs.water == 0 and not v.harvested then
+          v.currentNeed = "harvest"
           v.initialDelay = timePerRound
           v.timer = love.timer.getTime()
         end
@@ -101,53 +166,92 @@ function UpdatePlantNeeds()
   for k, v in ipairs(plantsGrowing) do
     if v.currentNeed ~= nil then
       local timeElapsed = currentTime - v.timer
-      if timeElapsed > 4 and not needMet then
+      if timeElapsed > timePerTask and not v.needMet then
         --fail
-        if v.showBadgeTimer >= 0 then
-          v.showBadgeTimer = 2-(timeElapsed-4)
-        else
-          if v.currentNeed == "harvest" then
-            v.plantStage = 4
-          end
-          v.score = v.score - 1
-          v.currentNeed = nil
-          v.needMet = false
-          v.timeLeft = 4
+        v.showBadgeTimer = currentTime
+        v.badgeState = 5
+        if v.currentNeed == "harvest" then
+          v.plantStage = 6
         end
-      elseif timeElapsed <= 4 then
-        if v.needMet then
-          v.currentNeed = nil
-          v.needMet = false
-          v.score = v.score + math.floor(v.timeLeft)
-          v.tasksCompleted = tasksCompleted + 1
+        v.score = v.score - 1
+        v.currentNeed = nil
+        v.initialDelay = v.initialDelay + timePerTask + love.math.random(6)
+        v.needMet = false
+        v.timeLeft = timePerTask
+      elseif v.needMet and timeElapsed <= timePerTask then
+        v.showBadgeTimer = currentTime
+        v.badgeState = GetBadgeState(timeElapsed)
+        if v.currentNeed == "water" then
+          v.needs.water = v.needs.water - 1
           v.plantStage = F.getStage(v.tasksCompleted)
-          v.timeLeft = 4
-        else
-          v.timeLeft = 4 - timeElapsed
+        elseif v.currentNeed == "fertilizer" then
+          v.needs.fertilizer = v.needs.fertilizer - 1
+          v.plantStage = F.getStage(v.tasksCompleted)
+        elseif v.currentNeed == "harvest" then
+          v.plantStage = 4
+          v.harvested = true
         end
+        v.currentNeed = nil
+        v.initialDelay = v.initialDelay + timeElapsed + love.math.random(6)
+        v.needMet = false
+        v.score = v.score + math.floor(v.timeLeft)
+        v.tasksCompleted = v.tasksCompleted + 1
+        v.timeLeft = timePerTask
+      else
+        v.timeLeft = timePerTask - timeElapsed
       end
+    end
+  end
+  
+  for k, v in ipairs(plantsGrowing) do
+    if v.showBadgeTimer > 0 then
+      v.showBadgeTimer = v.showBadgeTimer - (currentTime - v.showBadgeTimer)/3
+    else
+      v.showBadgeTimer = 0
     end
   end
   
 end
 
-function F.getTimeLeft(plantId)
+function F.getCurrentPlantInfo()
+  
+  return plantsGrowing
+  
+end
+
+function F.getStage(n)
+  
+  if n < 2 then
+    return 1
+  elseif n < 4 then
+    return 3
+  else
+    return 5
+  end
+  
+end
+
+function GetBadgeState(t)
+  incr = timePerTask/4
+  if t <= incr then
+    return 1
+  elseif t <= incr*2 then
+    return 2
+  elseif t <= incr*3 then
+    return 3
+  elseif t <= incr*4 then
+    return 4
+  else
+    return 5
+  end
+end
+
+function F.getTimeLeft()
+  
+  return timeLeft
   
 end
 
 
-function F.getCurrentNeed(plantId)
-  
-end
-
-
-function F.getTimeLeft(plantId)
-  
-end
-
-
-function F.getTimeLeft(plantId)
-  
-end
 
 return F

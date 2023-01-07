@@ -60,9 +60,15 @@ function love.draw()
   
 end
 
-function love.mousepressed()
+function love.mousepressed(x, y)
   
   --here we can start drag events for handling plants, water, etc. as well as words in the fair scene
+  C.handleMouseClick(x, y)
   
+end
+
+function love.mousereleased(x, y)
+  
+  C.handleMouseRelease(x, y)
   
 end

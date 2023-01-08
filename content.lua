@@ -710,6 +710,7 @@ function C.handleMouseClick(mx, my)
       else
         currentScene = Scenes.FARM
         F.newDaySetup(seedsToPlant)
+        StartDay()
         showNumberWarning = false
       end
     end
@@ -788,7 +789,6 @@ function C.handleKeyPress(k)
     StartDay()
     currentScene = Scenes.FARM
   elseif currentScene == Scenes.BARN and k == "return" then
-    StartDay()
     currentScene = Scenes.MORNING
   elseif currentScene == Scenes.PREFAIR and k == "return" then
     currentScene = Scenes.FAIR

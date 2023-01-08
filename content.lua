@@ -196,6 +196,7 @@ function C.init()
   colorTextDisplayTime = 2
   
   backgroundMusic:play()
+  backgroundMusic:setLooping(true)
   
 end
 

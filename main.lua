@@ -8,7 +8,7 @@ lg = love.graphics
 la = love.audio
 lm = love.mouse
 
-TEST = true
+TEST = false
 
 Scenes = 
 {
@@ -19,7 +19,7 @@ Scenes =
   FARM = 4,
   REVEAL = 5,
   BARN = 6,
-  NIGHT = 7,
+  MORNING = 7,
   FAIR = 8,
   RESULTS = 9
   
@@ -40,10 +40,7 @@ function love.load()
 end
 
 function love.update()
-  
-  --TODO - only call certain updates/inits
-  
-  F.update()
+
   C.update()
   CF.update()
   
@@ -70,5 +67,11 @@ end
 function love.mousereleased(x, y)
   
   C.handleMouseRelease(x, y)
+  
+end
+
+function love.keypressed(key, scancode, isrepeat)
+  
+  C.handleKeyPress(key)
   
 end

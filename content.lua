@@ -22,6 +22,7 @@ local seedChoiceScreen --image
 local fairScreen --image
 local scoreScreen --image TODO
 local doneBadge --quad
+local eodOverlay
 
 --sprite quad tables
 local cropQuads = {}
@@ -56,6 +57,13 @@ local currentCrops = {}
 local plantNeedBadges = {}
 local timeLeftBadges = {}
 local resultBadges = {}
+local overlayLocations = {}
+local seedsToPlant = {}
+local seedButtonLocs = {}
+
+--bools
+local showEodOverlay
+local allOpened
 
 function C.init()
   
@@ -74,11 +82,15 @@ function C.init()
   fairScreen = lg.newImage("/assets/fair-screen.png")
   nightScreen = lg.newImage("/assets/night-screen.png")
   seedChoiceScreen = lg.newImage("/assets/seed-choice-screen.png")
+  eodOverlay = lg.newImage("/assets/eod-overlay.png")
   
   doneBadge = lg.newQuad(0, 0, 80, 80, 720, 160)
   
   plantFont = lg.newFont("/assets/Jua-Regular.ttf", 20)
   dialogFont = lg.newFont("/assets/Acme-Regular.ttf", 20)
+  
+  showEodOverlay = false
+  allOpened = false
   
   InitCropQuads()
   InitFruitQuads()
@@ -86,7 +98,40 @@ function C.init()
   
   InitObjectPlacement()
   
-  InitCrops()
+  InitOverlayPlacement()
+  
+  seedsToPlant = {
+    n = 2,
+    a = 2,
+    v = 2
+  }
+  
+  seedButtonLocs = {
+    {{x = 226,
+      y = 325,
+      x2 = 262,
+      y2 = 362},
+    {x = 332,
+      y = 325,
+      x2 = 366,
+      y2 = 362}},
+    {{x = 226,
+      y = 400,
+      x2 = 262,
+      y2 = 436},
+    {x = 332,
+      y = 400,
+      x2 = 366,
+      y2 = 436}},
+    {{x = 226,
+      y = 476,
+      x2 = 262,
+      y2 = 512},
+    {x = 332,
+      y = 476,
+      x2 = 366,
+      y2 = 512}}
+  }
   
 end
 
@@ -96,57 +141,239 @@ function C.update()
   
   CheckHoverStates(mx, my)
   
+  if currentScene == Scenes.FARM and not showEodOverlay then
+    F.update()
+  end
+  
   currentCrops = F.getCurrentPlantInfo()
+  
+  showEodOverlay = F.getComplete() or F.getTimeUp()
   
 end
 
 function C.draw()
   
   if currentScene == Scenes.FARM then
-    lg.draw(farmBackground)
     
-    if currentlyHighlighted then
-      HighlightObject()
+    DrawFarm()
+    
+    if showEodOverlay then
+      DrawEODOverlay(true)
     end
+    
+  elseif currentScene == Scenes.BARN then
+    
+    DrawBarn()
+    
+  elseif currentScene == Scenes.MORNING then
+    
+    DrawSeedSelection()
+    
+  end
   
-    local xOffset = 30
-    local yOffset = 40
-    for k, v in ipairs(currentCrops) do
-      local img = cropQuads[((v.cropNum-1)*6) + v.plantStage]
-      if v.isDragging and v.plantStage >= 5 then
-        img = cropQuads[((v.cropNum-1)*6) + 4]
-        lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], lm.getX(), lm.getY())
+end
+
+function DrawSeedSelection()
+  
+  lg.draw(seedChoiceScreen)
+  
+  local plantsInStorage = F.getAllPlants()
+  local n, v, a = GetCounts(plantsInStorage)
+  
+  lg.setFont(dialogFont)
+  
+  lg.printf(seedsToPlant.n, 290, 328, 40, "left")
+  lg.printf(seedsToPlant.a, 290, 402, 40, "left")
+  lg.printf(seedsToPlant.v, 290, 476, 40, "left")
+  
+  lg.printf(n, 490, 328, 40, "left")
+  lg.printf(a, 490, 402, 40, "left")
+  lg.printf(v, 490, 476, 40, "left")
+  
+  lg.printf(n, 660, 328, 40, "left")
+  lg.printf(a, 660, 402, 40, "left")
+  lg.printf(v, 660, 476, 40, "left")
+  
+  lg.printf("'A fairy tale adventure'", 210, 548, 300, "left")
+  
+end
+
+function DrawBarn()
+  
+  lg.draw(barnBackground)
+  local plantsInStorage = F.getAllPlants()
+  
+  
+  local nPos = 112
+  local nouns = ""
+  local aPos = 112
+  local ads = ""
+  local vPos = 112
+  local verbs = ""
+  lg.setFont(dialogFont)
+  for k, v in ipairs(plantsInStorage) do
+    if v.plantType == "noun" then
+      lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], nPos, 103)
+      if #nouns ~= 0 then
+        nouns = nouns..", "..v.word
+      else
+        nouns = v.word
       end
-      lg.draw(cropSprites, img, crops[k].x-5, crops[k].y-5)
-      if v.currentNeed ~= nil then
-        local b = 3
-        if v.currentNeed == "water" then
-          b = 1
-        elseif v.currentNeed == "fertilizer" then
-          b = 2
-        end
-        
-        lg.draw(cropBadges, plantNeedBadges[b], crops[k].x + xOffset, crops[k].y + yOffset)
-        lg.setColor(1, 1, 1, .5)
-        lg.draw(cropBadges, timeLeftBadges[GetTimeLeftBadge(v.timeLeft)], crops[k].x + xOffset, crops[k].y + yOffset)
-        lg.reset()
+      nPos = nPos + 60
+    elseif v.plantType == "ad" then
+      lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], aPos, 224)
+      if #ads ~= 0 then
+        ads = ads..", "..v.word
+      else
+        ads = v.word
       end
-      if v.showBadgeTimer > 0 then
-        lg.draw(cropBadges, resultBadges[v.badgeState], crops[k].x + xOffset, crops[k].y + yOffset)
+      aPos = aPos + 60
+    elseif v.plantType == "verb" then
+      lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], vPos, 350)
+      if #verbs ~= 0 then
+        verbs = verbs..", "..v.word
+      else
+        verbs = v.word
       end
-      if v.harvested then
-        lg.draw(cropBadges, doneBadge, crops[k].x + xOffset, crops[k].y + yOffset)
-      end
+      vPos = vPos + 60
+    end
+  end
+  
+  local n, v, a = GetCounts(plantsInStorage)
+  lg.printf(n .." nouns: "..nouns, 545, 115, 200, "left")
+  lg.printf(a .." advs/adjs: "..ads, 545, 241, 200, "left")
+  lg.printf(v .." verbs: "..verbs, 545, 368, 200, "left")
+  
+  lg.printf("Press 'enter' to start a new day", 50, 520, 200, "center")
+  
+end
+
+
+function GetCounts(plants)
+  local n = 0
+  local v = 0
+  local a = 0
+  
+  for k, va in ipairs(plants) do
+    if va.plantType == "noun" then
+      n = n + 1
+    elseif va.plantType == "ad" then
+      a = a + 1
+    else
+      v = v + 1
+    end
+  end
+  
+  return n, v, a
+  
+end
+
+
+function DrawEODOverlay(finishedEarly)
+  
+  lg.reset()
+  lg.setFont(dialogFont)
+  local text = "THat's it for the day's harvest!"
+  
+  lg.draw(eodOverlay)
+  if finishedEarly then
+    text = "You harvested all the wordfruit today!"
+  end
+  
+  lg.setColor(17/225, 80/225, 15/225) 
+  lg.printf(text.." To open up the fruit and reveal the words you've grown, click on each fruit.", 52, 53, 600, "left")
+  lg.reset()
+  lg.setFont(plantFont)
+  
+  local allOpenedL = true
+
+  for k, v in ipairs(currentCrops) do
+    local c = v.cropNum
+    if v.plantStage <= 4 then
+      c = c + 6
+    elseif not v.harvested and v.plantStage >= 5 then
+      c = c + 3
     end
     
+    lg.draw(fruitSprites, fruitQuads[c], overlayLocations[k].x, overlayLocations[k].y)
+    
+    if v.opened then
+      if v.plantStage <= 4 then
+        c = c - 6
+      end
+      lg.draw(fruitSprites, fruitQuads[c+9], overlayLocations[k].x+100, overlayLocations[k].y-20)
+      
+      lg.setColor(17/225, 80/225, 15/225) 
+      lg.setFont(plantFont)
+      lg.printf(v.goodWord, overlayLocations[k].x+105, overlayLocations[k].y + 50, 100, "center")
+      lg.reset()
+    else
+      allOpenedL = false
+    end
+  end
+  
+  if allOpenedL then
+    allOpened = true
+    lg.setColor(17/225, 80/225, 15/225) 
     lg.setFont(dialogFont)
-    lg.printf(math.floor(F.getTimeLeft()), 610, 529, 50, "left")
-    
-    local cd = F.getCurrentlyDragging()
-    if cd ~= nil then
-      ShowDraggingItem(cd)
+    lg.printf("Great! Now press 'enter' to continue to the barn.", 52, 430, 600, "left")
+    lg.reset()
+  end
+  
+end
+
+function FinishDay()
+  
+  showEodOverlay = false
+  F.finishFarmDay()
+  
+end
+
+function DrawFarm()
+  
+  lg.draw(farmBackground)
+  
+  if currentlyHighlighted then
+    HighlightObject()
+  end
+
+  local xOffset = 30
+  local yOffset = 40
+  currentCrops = F.getCurrentPlantInfo()
+  for k, v in ipairs(currentCrops) do
+    local img = cropQuads[((v.cropNum-1)*6) + v.plantStage]
+    if v.isDragging and v.plantStage >= 5 then
+      img = cropQuads[((v.cropNum-1)*6) + 4]
+      lg.draw(fruitSprites, fruitQuads[GetFruit(v.cropNum, v.plantStage)], lm.getX(), lm.getY())
     end
-    
+    lg.draw(cropSprites, img, crops[k].x-5, crops[k].y-5)
+    if v.currentNeed ~= nil then
+      local b = 3
+      if v.currentNeed == "water" then
+        b = 1
+      elseif v.currentNeed == "fertilizer" then
+        b = 2
+      end
+      
+      lg.draw(cropBadges, plantNeedBadges[b], crops[k].x + xOffset, crops[k].y + yOffset)
+      lg.setColor(1, 1, 1, .5)
+      lg.draw(cropBadges, timeLeftBadges[GetTimeLeftBadge(v.timeLeft)], crops[k].x + xOffset, crops[k].y + yOffset)
+      lg.reset()
+    end
+    if v.showBadgeTimer > 0 then
+      lg.draw(cropBadges, resultBadges[v.badgeState], crops[k].x + xOffset, crops[k].y + yOffset)
+    end
+    if v.harvested then
+      lg.draw(cropBadges, doneBadge, crops[k].x + xOffset, crops[k].y + yOffset)
+    end
+  end
+  
+  lg.setFont(dialogFont)
+  lg.printf(math.floor(F.getTimeLeft()), 610, 529, 50, "left")
+  
+  local cd = F.getCurrentlyDragging()
+  if cd ~= nil then
+    ShowDraggingItem(cd)
   end
   
 end
@@ -177,26 +404,30 @@ function GetFruit(n, p)
 end
 
 function CheckHoverStates(mx, my)
+  
+  if currentScene == Scenes.FARM and not showEodOverlay then
 
-  --truck
-  if U.detectOverlap(truck.x, truck.y, truck.x2, truck.y2, mx, my) then
-    currentlyHighlighted = truck
-  --barn
-  elseif U.detectOverlap(barn.x, barn.y, barn.x2, barn.y2, mx, my) then
-    currentlyHighlighted = barn
-    --well
-  elseif U.detectOverlap(well.x, well.y, well.x2, well.y2, mx, my) then
-    currentlyHighlighted = well
-  --crops
-  else
-    for k, v in ipairs(crops) do
-      if U.detectOverlap(v.x, v.y, v.x2, v.y2, mx, my) then
-        currentlyHighlighted = v
-        return
+    --truck
+    if U.detectOverlap(truck.x, truck.y, truck.x2, truck.y2, mx, my) then
+      currentlyHighlighted = truck
+    --barn
+    elseif U.detectOverlap(barn.x, barn.y, barn.x2, barn.y2, mx, my) then
+      currentlyHighlighted = barn
+      --well
+    elseif U.detectOverlap(well.x, well.y, well.x2, well.y2, mx, my) then
+      currentlyHighlighted = well
+    --crops
+    else
+      for k, v in ipairs(crops) do
+        if U.detectOverlap(v.x, v.y, v.x2, v.y2, mx, my) then
+          currentlyHighlighted = v
+          return
+        end
       end
+      
+      currentlyHighlighted = nil
     end
     
-    currentlyHighlighted = nil
   end
   
 end
@@ -215,6 +446,46 @@ end
 
 
 function C.handleMouseClick(mx, my)
+  
+  if showEodOverlay then
+    for k, v in ipairs(currentCrops) do
+      if U.detectOverlap(overlayLocations[k].x, overlayLocations[k].y, overlayLocations[k].x+ overlayLocations[k].w, overlayLocations[k].y+overlayLocations[k].w, mx, my) then
+        v.opened = true
+      end
+    end
+    return
+    
+  elseif currentScene == Scenes.MORNING then
+    for k, v in ipairs(seedButtonLocs) do
+      if U.detectOverlap(v[1].x, v[1].y, v[1].x2, v[1].y2, mx, my) then
+        if seedsToPlant.n + seedsToPlant.a + seedsToPlant.v >= 6 then
+          return
+        end
+        if k == 1 then
+          seedsToPlant.n = seedsToPlant.n + 1
+        elseif k == 2 then
+          seedsToPlant.a = seedsToPlant.a + 1
+        elseif k == 3 then
+          seedsToPlant.v = seedsToPlant.v + 1
+        end
+      end
+      if U.detectOverlap(v[2].x, v[2].y, v[2].x2, v[2].y2, mx, my) then
+        if k == 1 and seedsToPlant.n > 0 then
+          seedsToPlant.n = seedsToPlant.n - 1
+        elseif k == 2 and seedsToPlant.a > 0 then
+          seedsToPlant.a = seedsToPlant.a - 1
+        elseif k == 3 and seedsToPlant.v > 0 then
+          seedsToPlant.v = seedsToPlant.v - 1
+        end
+      end
+    end
+    
+    if U.detectOverlap(563, 544, 758, 590, mx, my) then
+      currentScene = Scenes.FARM
+      F.newDaySetup(seedsToPlant)
+    end
+    return
+  end
   
   --truck
   if U.detectOverlap(truck.x, truck.y, truck.x2, truck.y2, mx, my) then
@@ -258,6 +529,21 @@ function C.handleMouseRelease(mx, my)
   
 end
 
+function C.handleKeyPress(k)
+  
+  if showEodOverlay and currentScene == Scenes.FARM and allOpened and k == "return" then
+    F.finishFarmDay()
+    currentScene = Scenes.BARN
+  elseif currentScene == Scenes.INTRO and k == "return" then
+    currentScene = Scenes.FARM
+  elseif currentScene == Scenes.TITLE and k == "return" then
+    currentScene = Scenes.INTRO
+  elseif currentScene == Scenes.BARN and k == "return" then
+    currentScene = Scenes.MORNING
+  end
+  
+end
+
 
 function HighlightObject()
   
@@ -281,7 +567,19 @@ function HighlightObject()
   
 end
 
-function InitCrops()
+function InitOverlayPlacement()
+  
+  local xStart = 76
+  local yStart = 100
+  for i = 0, 2 do
+    for j = 0, 1 do
+      table.insert(overlayLocations, {
+          x = xStart+(j*280),
+          y = yStart +(i*100),
+          w = 120
+        })
+    end
+  end
   
 end
 

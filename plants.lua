@@ -20,7 +20,6 @@ function P.createPlant(plantType)
   tempTable.score = 0
   tempTable.needs = GetPlantNeeds()
   tempTable.currentNeed = nil
-  tempTable.exists = true
   tempTable.initialDelay = love.math.random(10)
   tempTable.timer = 0
   tempTable.timeLeft = 0
@@ -31,6 +30,7 @@ function P.createPlant(plantType)
   tempTable.badgeState = nil
   tempTable.cropNum = GetCropNum(plantType)
   tempTable.harvested = false
+  tempTable.opened = false
   
   id = id + 1
   

@@ -12,6 +12,8 @@ local currentTheme
 local farmName
 local startTime
 local timePerTask
+local isComplete
+local completedPlants = {}
 
 function F.init()
   
@@ -22,7 +24,8 @@ function F.init()
   isDialogShowing = false
   currentTheme = 1
   plantsGrowing = InitFirstPlants()
-  timePerTask = 7
+  timePerTask = 8
+  isComplete = false
   
 end
 
@@ -34,8 +37,94 @@ function F.update()
   
   timeLeft = timePerRound + (startTime - love.timer.getTime())
   
+  isComplete = CheckComplete()
+  
 end
 
+function CheckComplete()
+  
+  local result = true
+
+  for k, v in ipairs(plantsGrowing) do
+    if v.harvested == false then
+      v.word = v.badWord
+      result = false
+    else
+      v.word = GetWordFromScore(v.goodWord, v.badWord, v.score)
+    end
+  end
+  return result
+  
+end
+
+function GetWordFromScore(good, bad, score)
+  
+  if score >= (2 * timePerTask) then
+    return good
+  else
+    return bad
+  end
+  
+end
+
+function F.getComplete()
+  
+  return isComplete
+  
+end
+
+function F.getTimeUp()
+  
+  return timeLeft <= 0
+  
+end
+
+function F.finishFarmDay()
+  
+  for k, v in ipairs(plantsGrowing) do
+    table.insert(completedPlants, {
+        
+        id = v.id,
+        plantType = v.plantType,
+        cropNum = v.cropNum,
+        plantStage = v.plantStage,
+        word = v.word,
+        score = v.score
+        
+      })
+  end
+  
+  plantsGrowing = {}
+  timeLeft = timePerRound
+  currentlyDragging = nil
+  timePerTask = timePerTask - 1
+  isComplete = false
+  
+end
+
+function F.newDaySetup(seeds)
+  
+  plantsGrowing = {}
+  
+  for i=1, seeds.n do
+    table.insert(plantsGrowing, P.createPlant("noun"))
+  end
+  
+  for i=1, seeds.a do
+    table.insert(plantsGrowing, P.createPlant("ad"))
+  end
+  
+  for i=1, seeds.v do
+    table.insert(plantsGrowing, P.createPlant("verb"))
+  end
+  
+end
+
+function F.getAllPlants()
+  
+  return completedPlants
+  
+end
 
 --called from main depending on current scene
 function F.handleMouseClick(obj, num)
@@ -55,7 +144,6 @@ end
 
 --called from main depending on current scene
 function F.handleMouseRelease(obj, num)
-  
   
   local p = nil
   if num ~= nil then
@@ -107,24 +195,6 @@ function F.getTimePerTask()
   
 end
 
-function EndRound()
-  
-end
-
-
---call at the end of each "night" scene
-function ResetDay()
-  
-  
-  
-end
-
-function AdvanceDialog()
-  
-  
-  
-end
-
 function InitFirstPlants()
   
   local tempTable = 
@@ -173,7 +243,7 @@ function UpdatePlantNeeds()
         if v.currentNeed == "harvest" then
           v.plantStage = 6
         end
-        v.score = v.score - 1
+        v.score = v.score - timePerTask
         v.currentNeed = nil
         v.initialDelay = v.initialDelay + timePerTask + love.math.random(6)
         v.needMet = false

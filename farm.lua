@@ -85,9 +85,11 @@ function CheckComplete()
   for k, v in ipairs(plantsGrowing) do
     if v.harvested == false then
       v.word = v.badWord
+      v.altWord = v.altBad
       result = false
     else
       v.word = GetWordFromScore(v.goodWord, v.badWord, v.score)
+      v.altWord = GetWordFromScore(v.altGood, v.altBad, v.score)
     end
   end
   return result

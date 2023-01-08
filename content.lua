@@ -345,9 +345,9 @@ function DrawSeedSelection()
   lg.printf(a, 490, 402, 40, "left")
   lg.printf(v, 490, 476, 40, "left")
   
-  lg.printf(gn, 660, 328, 40, "left")
-  lg.printf(ga, 660, 402, 40, "left")
-  lg.printf(gv, 660, 476, 40, "left")
+  lg.printf("5", 660, 328, 40, "left")
+  lg.printf("7", 660, 402, 40, "left")
+  lg.printf("3", 660, 476, 40, "left")
   
   lg.printf("'A fairy tale adventure'", 210, 548, 300, "left")
   

@@ -51,7 +51,7 @@ local lilFont
 local resultsFont
 
 --audio
-local backgroundMusic --audio TODO
+local backgroundMusic --audio
 local tickTock --sfx TODO
 local dingPerfect --sfx TODO
 local dingGood --sfx TODO
@@ -132,6 +132,8 @@ function C.init()
   lilFont = lg.newFont("/assets/BenchNine-Regular.ttf", 20)
   resultsFont = lg.newFont("/assets/Acme-Regular.ttf", 24)
   
+  backgroundMusic = la.newSource("/assets/bg-music.mp3", "stream")
+  
   showEodOverlay = false
   allOpened = false
   confirmFinished = false
@@ -192,6 +194,8 @@ function C.init()
     }
   
   colorTextDisplayTime = 2
+  
+  backgroundMusic:play()
   
 end
 
@@ -301,6 +305,9 @@ function DrawFair()
     end
     lg.draw(wordCards, wordCardQuads[v.c], v.x, v.y)
     lg.setColor(0, 0, 0)
+    if #w == 0 then
+      w = v.w
+    end
     lg.printf(w, v.x, v.y+10, 105, "center")
     lg.reset()
     if #v.addCoords > 0 then
@@ -311,6 +318,9 @@ function DrawFair()
         end
         lg.draw(wordCards, wordCardQuads[v.c], v1[1], v1[2])
         lg.setColor(0, 0, 0)
+        if #w1 == 0 then
+          w1 = v.w
+        end
         lg.printf(w1, v1[1], v1[2]+10, 105, "center")
         lg.reset()
       end

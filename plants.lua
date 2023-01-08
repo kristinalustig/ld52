@@ -15,9 +15,9 @@ function P.createPlant(plantType)
   local tempTable = {}
   tempTable.id = id
   tempTable.plantType = plantType
-  tempTable.goodWord = W.getWord(plantType, currentTheme, false)
+  tempTable.goodWord = W.getWord(plantType, currentTheme, true)
   tempTable.altGood = W.getAltWord(plantType, tempTable.goodWord)
-  tempTable.badWord = W.getWord(plantType, currentTheme, true)
+  tempTable.badWord = W.getWord(plantType, currentTheme, false)
   tempTable.altBad = W.getAltWord(plantType, tempTable.badWord)
   tempTable.score = 0
   tempTable.needs = GetPlantNeeds()

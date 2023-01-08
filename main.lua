@@ -8,7 +8,7 @@ lg = love.graphics
 la = love.audio
 lm = love.mouse
 
-TEST = true
+TEST = false
 
 Scenes = 
 {
@@ -33,7 +33,7 @@ currentScene = nil
 
 function love.load()
   
-  currentScene = Scenes.FAIR
+  currentScene = Scenes.TITLE
   
   C.init()
   W.init()

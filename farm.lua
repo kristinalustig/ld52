@@ -30,7 +30,7 @@ function F.init()
   plantsGrowing = InitFirstPlants()
   timePerTask = 8
   isComplete = false
-  daysLeft = 1
+  daysLeft = 3
   isPaused = false
   pauseTime = 0
   

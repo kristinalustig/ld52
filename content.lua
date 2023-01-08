@@ -82,6 +82,7 @@ local showEodOverlay
 local allOpened
 local confirmFinished
 local timeAtEnd
+local showNumberWarning
 
 function C.init()
   
@@ -123,6 +124,7 @@ function C.init()
   showEodOverlay = false
   allOpened = false
   confirmFinished = false
+  showNumberWarning = false
   
   InitCropQuads()
   InitFruitQuads()
@@ -284,6 +286,8 @@ function DrawSeedSelection()
   local plantsInStorage = F.getAllPlants()
   local n, v, a = GetCounts(plantsInStorage)
   
+  local gn, gv, ga = GetCounts(CF.getThemeCoords())
+  
   lg.setFont(dialogFont)
   
   lg.printf(seedsToPlant.n, 290, 328, 40, "left")
@@ -294,11 +298,17 @@ function DrawSeedSelection()
   lg.printf(a, 490, 402, 40, "left")
   lg.printf(v, 490, 476, 40, "left")
   
-  lg.printf(n, 660, 328, 40, "left")
-  lg.printf(a, 660, 402, 40, "left")
-  lg.printf(v, 660, 476, 40, "left")
+  lg.printf(gn, 660, 328, 40, "left")
+  lg.printf(ga, 660, 402, 40, "left")
+  lg.printf(gv, 660, 476, 40, "left")
   
   lg.printf("'A fairy tale adventure'", 210, 548, 300, "left")
+  
+  if showNumberWarning then
+    lg.setFont(dialogFont)
+    lg.printf("Total seeds must be exactly 6", 563, 525, 200, "left")
+    lg.reset()
+  end
   
 end
 
@@ -650,8 +660,13 @@ function C.handleMouseClick(mx, my)
     end
     
     if U.detectOverlap(563, 544, 758, 590, mx, my) then
-      currentScene = Scenes.FARM
-      F.newDaySetup(seedsToPlant)
+      if seedsToPlant.a + seedsToPlant.n + seedsToPlant.v ~= 6 then
+        showNumberWarning = true
+      else
+        currentScene = Scenes.FARM
+        F.newDaySetup(seedsToPlant)
+        showNumberWarning = false
+      end
     end
     return
   elseif currentScene == Scenes.FAIR then

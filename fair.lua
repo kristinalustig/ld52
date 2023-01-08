@@ -26,7 +26,7 @@ function CF.init()
 {'noun',2,false,436,274,false},
 {'ad',4,false,322,311,false},
 {'noun',4,false,164,343,false},
-{'ad',5,false,269,343,false},
+{'ad',5,true,269,343,false},
 {'noun',5,false,474,343,false},
 {'verb',2,false,175,375,false},
 {'noun',4,false,314,375,false},
@@ -34,7 +34,7 @@ function CF.init()
 {'verb',3,false,96,407,false},
 {'noun',1,false,244,407,false},
 {'ad',6,false,419,407,false},
-{'ad',7,false,201,439,false}}
+{'ad',7,true,201,439,false}}
 
   if TEST then
     completedPlants = U.createTestCompletedPlants()
@@ -55,6 +55,18 @@ function CF.startFair(plants)
   
   completedPlants = F.getAllPlants()
   CF.placeInTray()
+  
+end
+
+function CF.getThemeCoords()
+  
+  local tempTable = {}
+  for k, v in ipairs(theme1Coords) do
+    tempTable.insert({
+        plantType = v[1]
+      })
+    end
+  return tempTable
   
 end
 

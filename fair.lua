@@ -146,17 +146,21 @@ function CF.handleMouseClick(mx, my)
       v.inTray = false
       return
     elseif v.inTray == false and #v.addCoords ~= 0 then
+      local foundOne = false
       for k1, v1 in ipairs(v.addCoords) do
         if U.detectOverlap(v1[1], v1[2], v1[1]+105, v1[2]+32, mx, my) then
           v[6] = false
+          foundOne = true
         end
       end
-      v.addCoords = {}
-      v.alt = false
-      currentlyDragging = v
-      v.x = mx
-      v.y = my
-      return
+      if foundOne then
+        v.addCoords = {}
+        v.alt = false
+        currentlyDragging = v
+        v.x = mx
+        v.y = my
+        return
+      end
     end
   end
   
@@ -182,6 +186,12 @@ function CheckOverlapWithCoords(card, mx, my, purpose)
     
     if U.detectOverlap(v[4], v[5], v[4]+105, v[5]+32, mx, my) then
       if purpose == "add" then
+        if v[6] ~= false then
+          local removeIt = GetCardById(v[6])
+          removeIt.inTray = true
+          removeIt.addCoords = {}
+          removeIt.alt = false
+        end
         card.x = v[4]
         card.y = v[5]
         card.inTray = false
@@ -201,6 +211,16 @@ function CheckOverlapWithCoords(card, mx, my, purpose)
   end
   
   return false
+  
+end
+
+function GetCardById(id)
+  
+  for k, v in ipairs(stillInTray) do
+    if v.id == id then
+      return v
+    end
+  end
   
 end
 

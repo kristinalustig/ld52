@@ -69,60 +69,32 @@
 1,spacedog,spacedogs,1,2
 1,pilot,pilots,1,2
 1,scientist,scientists,1,2
-1,mutation,nil,1,2
-1,government facility,nil,2,2
-1,TODO,nil,2,2
-1,galaxy,nil,2,2
-1,planet,nil,2,2
-1,NASA command center,nil,2,2
-1,TODO,nil,2,2
-1,TODO,nil,2,2
-1,TODO,nil,2,2
-1,laser,nil,3,2
-1,time machine,nil,3,2
-1,shrink ray,nil,3,2
-1,spaceship,nil,3,2
-1,TODO,nil,3,2
-1,TODO,nil,3,2
-1,TODO,nil,3,2
-1,TODO,nil,3,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,4,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-2,TODO,nil,5,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
-3,TODO,nil,6,2
+1,mutation,mutations,1,2
+1,government facility,government facilities,2,2
+1,area 51,area 51s,2,2
+1,galaxy,galaxies,2,2
+1,planet,planets,2,2
+1,NASA command center,NASA command centers,2,2
+1,evil genius,evil geniuses,2,2
+1,astronaut,astronauts,2,2
+1,robot,robots,2,2
+1,laser,lasers,3,2
+1,time machine,time machines,3,2
+1,shrink ray,shrink rays,3,2
+1,spaceship,spaceships,3,2
+1,cyborg,cyborgs,3,2
+1,superhuman,superhumans,3,2
+1,oxygen tank,oxygen tanks,3,2
+1,moon,moons,3,2
+2,glowing,glowingly,4,2
+2,sharp,sharply,4,2
+2,neon,neonly,4,2
+2,instant,instantly,4,2
+2,evil,evilly,4,2
+2,technological,technologically,4,2
+2,goofy,goofily,4,2
+3,zapped,zapping,6,2
+3,teleported,teleporting,6,2
+3,shot,shooting,6,2
+3,floated,floating,6,2
+3,blasted off,blasting off,6,2

@@ -57,7 +57,6 @@ function F.startDay()
   
   startTime = love.timer.getTime()
   timeLeft = timePerRound
-  totalPausedTime = 0
   
 end
 

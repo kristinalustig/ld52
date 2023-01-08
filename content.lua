@@ -432,7 +432,7 @@ end
 
 function DrawEODOverlay(finishedEarly)
   
-  local daysLeft = F.getDaysLeft
+  local daysLeft = F.getDaysLeft()
   local bottomText = "Great! Now press 'enter' to continue to the barn."
   
   if daysLeft <= 1 then

@@ -106,6 +106,25 @@ function CF.checkPlaced()
   
   return true
 end
+
+
+function CF.getStoryScore()
+  
+  local score = 0
+  
+  for k, v in ipairs(theme1Coords) do
+    local c = GetCardById(v[6])
+    local mul = 1
+    if c.plantType == v[1] then
+      mul = 2
+    end
+    score = score + (c.score*mul)
+    
+  end
+  
+  return score
+  
+end
   
 
 function CF.placeInTray()
@@ -116,7 +135,7 @@ function CF.placeInTray()
   local yIncr = 36
   local i = 0
   for k, v in ipairs(completedPlants) do
-    table.insert(stillInTray, {id = v.id, x = x + xIncr*i, y = y + yIncr, c = v.cropNum, w = v.word, altw = v.altWord, inTray = true, addCoords = {}, alt = false})
+    table.insert(stillInTray, {id = v.id, x = x + xIncr*i, y = y + yIncr, c = v.cropNum, w = v.word, altw = v.altWord, inTray = true, addCoords = {}, alt = false, score = v.score, plantType = v.plantType})
     if x + xIncr*i > 600 then
       y = y + yIncr
       x = 20
@@ -131,6 +150,68 @@ end
 function CF.getStillInTray()
   
   return stillInTray
+  
+end
+
+function CF.getCardById(id)
+  
+  return GetCardById(id)
+  
+end
+
+function CF.generateResults()
+  
+  local t = theme1Coords
+  
+  local story = 
+  {"Once upon a time, a ",
+    t[1],
+    " lived in a ",
+    t[2],
+    " ",
+    t[3],
+    ". They loved their ",
+    t[4],
+    " and they ",
+    t[5],
+    " every day. Then, something ",
+    t[6],
+    " happened. When the ",
+    t[7],
+    " was ",
+    t[8],
+    ", they saw from the corner of their eye a ",
+    t[9],
+    " ",
+    t[10],
+    " coming straight for the ",
+    t[11],
+    "! Luckily, they were very ",
+    t[12],
+    " and went to face the ",
+    t[13],
+    " ",
+    t[14],
+    ". With their ",
+    t[15],
+    ", they ",
+    t[16],
+    " the ",
+    t[17],
+    " until the ",
+    t[18],
+    " ",
+    t[19],
+    ". The ",
+    t[20],
+    " was so ",
+    t[21],
+    ", they ran ",
+    t[22],
+    " all the way home. The end."
+  }
+  
+  return story
   
 end
 

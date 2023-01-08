@@ -15,6 +15,8 @@ local scoreScreen --image
 local intro1Screen --image
 local intro2Screen --image
 local pauseScreen --image
+local resultsScreen --image
+local countdownBg --image
 
 
 --images
@@ -28,6 +30,7 @@ local barnHighlight --image
 local wellHighlight --image
 local truckHighlight --image
 local manureBlob --image
+local scoreBadges --spritesheet
 
 local doneBadge --quad
 local eodOverlay --image
@@ -45,6 +48,7 @@ local timerFont
 local timerBigFont
 local floorFont
 local lilFont
+local resultsFont
 
 --audio
 local backgroundMusic --audio TODO
@@ -76,6 +80,9 @@ local seedsToPlant = {}
 local seedButtonLocs = {}
 local wordCardQuads = {}
 local colorTextDisplayTime
+local gameResults
+local gameScore
+local badgeQuads
 
 --bools
 local showEodOverlay
@@ -98,6 +105,8 @@ function C.init()
   preFairBg = lg.newImage("/assets/pre-fair.png")
   titleScreen = lg.newImage("/assets/title.png")
   pauseScreen = lg.newImage("/assets/pause-bg.png")
+  resultsScreen = lg.newImage("/assets/resultsBg.png")
+  countdownBg = lg.newImage("/assets/countdownBg.png")
   
   dialogBox = lg.newImage("/assets/dialog.png")
   cropSprites = lg.newImage("/assets/growing-crops.png")
@@ -110,6 +119,7 @@ function C.init()
   truckHighlight = lg.newImage("/assets/truck-highlight.png")
   manureBlob = lg.newImage("/assets/manure.png")
   wordCards = lg.newImage("/assets/wordCards.png")
+  scoreBadges = lg.newImage("/assets/medals.png")
   
   doneBadge = lg.newQuad(0, 0, 80, 80, 720, 160)
   
@@ -120,6 +130,7 @@ function C.init()
   timerBigFont = lg.newFont("/assets/Acme-Regular.ttf", 100)
   floorFont = lg.newFont("/assets/Acme-Regular.ttf", 30)
   lilFont = lg.newFont("/assets/BenchNine-Regular.ttf", 20)
+  resultsFont = lg.newFont("/assets/Acme-Regular.ttf", 24)
   
   showEodOverlay = false
   allOpened = false
@@ -171,6 +182,13 @@ function C.init()
     lg.newQuad(0, 0, 105, 32, 105, 96),
     lg.newQuad(0, 32, 105, 32, 105, 96),
     lg.newQuad(0, 64, 105, 32, 105, 96)
+  }
+  
+  badgeQuads = {
+    lg.newQuad(0, 0, 144, 144, 288, 288),
+    lg.newQuad(144, 0, 144, 144, 288, 288),
+    lg.newQuad(0, 144, 144, 144, 288, 288),
+    lg.newQuad(144, 144, 144, 144, 288, 288)
     }
   
   colorTextDisplayTime = 2
@@ -236,6 +254,35 @@ function C.draw()
     lg.draw(preFairBg)
   elseif currentScene == Scenes.PAUSE then
     lg.draw(pauseScreen)
+  elseif currentScene == Scenes.RESULTS then
+    lg.draw(resultsScreen)
+    lg.setFont(resultsFont)
+    lg.setColor(0, 0, 0)
+    lg.printf(gameResults, 100, 100, 510, "center")
+    lg.reset()
+    lg.draw(scoreBadges, GetScoreBadge(gameScore), 120, 400)
+    lg.setFont(dialogFont)
+    lg.setColor(0, 0, 0)
+    lg.printf("Your score was "..gameScore.." points.", 250, 410, 300, "left")
+    lg.printf("Great work, thanks for playing!", 250, 430, 300, "left")
+    lg.reset()
+  end
+  
+end
+
+function GetScoreBadge(s)
+  
+  if s > 100 then
+    --A
+    return badgeQuads[1]
+  elseif s > 80 then
+    --B
+    return badgeQuads[2]
+  elseif s > 60 then
+    return badgeQuads[3]
+  else
+    --D
+    return badgeQuads[4]
   end
   
 end
@@ -273,7 +320,7 @@ function DrawFair()
   
   if confirmFinished then
     lg.setFont(dialogFont)
-    lg.printf("You finished your story - press 'enter' to submit and get your score!", 10, 580, 780, "center")
+    lg.printf("You finished your story - press 'enter' to submit and get your score!", 10, 560, 780, "center")
     lg.reset()
   end
   
@@ -543,12 +590,10 @@ function DrawFarm()
   
   local countdown = F.getTimeLeft()
   if countdown > 61 then
-    lg.setColor(69/255, 130/255, 37/255)
-    lg.rectangle("fill", 0, 0, 800, 600)
-    lg.setColor(1, 1, 1)
+    lg.draw(countdownBg)
+    lg.setColor(1, 243/255, 135/255)
     lg.setFont(timerBigFont)
-    lg.printf("Get ready...", 0, 200, 800, "center")
-    lg.printf(math.floor(countdown-60), 0, 300, 800, "center")
+    lg.printf(math.floor(countdown-60), 0, 240, 800, "center")
     lg.reset()
   end
   
@@ -748,10 +793,34 @@ function C.handleKeyPress(k)
   elseif currentScene == Scenes.PREFAIR and k == "return" then
     currentScene = Scenes.FAIR
   elseif currentScene == Scenes.FAIR and confirmFinished then
+    gameScore = CF.getStoryScore()
+    gameResults = FormatResults(CF.generateResults())
     currentScene = Scenes.RESULTS
   end
   
 end
+
+function FormatResults(r)
+  
+  local str = ""
+  
+  for k, v in ipairs(r) do
+    if type(v) ~= "string" then
+      local c = CF.getCardById(v[6])
+      local w = c.w
+      if v[3] == true then
+        w = c.altw
+      end
+      str = str..w
+    else
+      str = str..v
+    end
+  end
+  
+  return str
+  
+end
+
 
 function StartDay()
   

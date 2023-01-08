@@ -618,7 +618,7 @@ function GetFruit(n, p)
   
   if p == 3 then 
     return n + 6
-  elseif p == 5 then
+  elseif p == 4 or p == 5 then
     return n
   else
     return n + 3

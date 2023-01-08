@@ -10,16 +10,19 @@ local plantsGrowing = {} --objects table
 local isDialogShowing --bool
 local currentTheme
 local farmName
+local daysLeft
 local startTime
 local timePerTask
 local isComplete
 local completedPlants = {}
 local testCompletedPlants = {}
+local isPaused
+local pauseTime
 
 function F.init()
   
   startTime = love.timer.getTime()
-  timePerRound = 60
+  timePerRound = 64
   timeLeft = timePerRound
   currentlyDragging = nil
   isDialogShowing = false
@@ -27,6 +30,9 @@ function F.init()
   plantsGrowing = InitFirstPlants()
   timePerTask = 8
   isComplete = false
+  daysLeft = 1
+  isPaused = false
+  pauseTime = 0
   
 end
 
@@ -34,6 +40,11 @@ end
 function F.update()
   
   --update the plants as necessary
+  
+  if isPaused then
+    return
+  end
+  
   UpdatePlantNeeds()
   
   timeLeft = timePerRound + (startTime - love.timer.getTime())
@@ -41,6 +52,32 @@ function F.update()
   isComplete = CheckComplete()
   
 end
+
+function F.startDay()
+  
+  startTime = love.timer.getTime()
+  timeLeft = timePerRound
+  totalPausedTime = 0
+  
+end
+
+function F.pauseScene(shouldPause)
+  
+  if shouldPause then
+    isPaused = true
+    pauseTime = love.timer.getTime()
+  else
+    isPaused = false
+    startTime = startTime - (pauseTime - love.timer.getTime())
+    for k, v in ipairs(plantsGrowing) do
+      if v.currentNeed ~= nil then
+        v.timer = v.timer - (pauseTime - love.timer.getTime())
+      end
+    end
+  end
+  
+end
+
 
 function CheckComplete()
   
@@ -100,6 +137,15 @@ function F.finishFarmDay()
   currentlyDragging = nil
   timePerTask = timePerTask - 1
   isComplete = false
+  daysLeft = daysLeft - 1
+  
+  return daysLeft
+  
+end
+
+function F.getDaysLeft()
+  
+  return daysLeft
   
 end
 
@@ -215,7 +261,7 @@ end
 function UpdatePlantNeeds()
   
   for k, v in ipairs(plantsGrowing) do
-    if timePerRound - timeLeft > v.initialDelay then
+    if timePerRound - timeLeft - 3 > v.initialDelay then
       if v.currentNeed == nil then
         local r = love.math.random(2)
         if r == 1 and v.needs.water >= 1 then
@@ -226,6 +272,7 @@ function UpdatePlantNeeds()
           v.timer = love.timer.getTime()
         elseif v.needs.fertilizer == 0 and v.needs.water == 0 and not v.harvested then
           v.currentNeed = "harvest"
+          v.plantStage = 5
           v.initialDelay = timePerRound
           v.timer = love.timer.getTime()
         end

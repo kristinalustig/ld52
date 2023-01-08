@@ -4,9 +4,20 @@ local CF = require "fair"
 
 C = {}
 
---images
+
+--screens
 local farmBackground --image
 local barnBackground --image
+local titleScreen --image
+local seedChoiceScreen --image
+local fairScreen --image
+local scoreScreen --image
+local intro1Screen --image
+local intro2Screen --image
+local pauseScreen --image
+
+
+--images
 local dialogBox --image
 local cropSprites --spritesheet
 local fruitSprites --spritesheet
@@ -17,14 +28,11 @@ local barnHighlight --image
 local wellHighlight --image
 local truckHighlight --image
 local manureBlob --image
-local titleScreen --image TODO
-local nightScreen --image
-local seedChoiceScreen --image
-local fairScreen --image
-local scoreScreen --image
+
 local doneBadge --quad
-local eodOverlay
+local eodOverlay --image
 local wordCards --image
+local preFairBg --image
 
 --sprite quad tables
 local cropQuads = {}
@@ -33,6 +41,10 @@ local fruitQuads = {}
 --fonts
 local plantFont
 local dialogFont
+local timerFont
+local timerBigFont
+local floorFont
+local lilFont
 
 --audio
 local backgroundMusic --audio TODO
@@ -63,16 +75,29 @@ local overlayLocations = {}
 local seedsToPlant = {}
 local seedButtonLocs = {}
 local wordCardQuads = {}
+local colorTextDisplayTime
 
 --bools
 local showEodOverlay
 local allOpened
 local confirmFinished
+local timeAtEnd
 
 function C.init()
   
+  
+  --screens
   farmBackground = lg.newImage("/assets/background.png")
   barnBackground = lg.newImage("/assets/barn-bg.png")
+  fairScreen = lg.newImage("/assets/fair-screen-a.png")
+  seedChoiceScreen = lg.newImage("/assets/seed-choice-screen.png")
+  eodOverlay = lg.newImage("/assets/eod-overlay.png")
+  intro1Screen = lg.newImage("/assets/intro-1.png")
+  intro2Screen = lg.newImage("/assets/intro-2.png")
+  preFairBg = lg.newImage("/assets/pre-fair.png")
+  titleScreen = lg.newImage("/assets/title.png")
+  pauseScreen = lg.newImage("/assets/pause-bg.png")
+  
   dialogBox = lg.newImage("/assets/dialog.png")
   cropSprites = lg.newImage("/assets/growing-crops.png")
   fruitSprites = lg.newImage("/assets/picked-fruit.png")
@@ -83,16 +108,17 @@ function C.init()
   wellHighlight = lg.newImage("/assets/well-highlight.png")
   truckHighlight = lg.newImage("/assets/truck-highlight.png")
   manureBlob = lg.newImage("/assets/manure.png")
-  fairScreen = lg.newImage("/assets/fair-screen-a.png")
-  nightScreen = lg.newImage("/assets/night-screen.png")
-  seedChoiceScreen = lg.newImage("/assets/seed-choice-screen.png")
-  eodOverlay = lg.newImage("/assets/eod-overlay.png")
   wordCards = lg.newImage("/assets/wordCards.png")
   
   doneBadge = lg.newQuad(0, 0, 80, 80, 720, 160)
   
   plantFont = lg.newFont("/assets/Jua-Regular.ttf", 20)
+  plantFontSm = lg.newFont("/assets/Jua-Regular.ttf", 16)
   dialogFont = lg.newFont("/assets/Acme-Regular.ttf", 20)
+  timerFont = lg.newFont("/assets/Acme-Regular.ttf", 40)
+  timerBigFont = lg.newFont("/assets/Acme-Regular.ttf", 100)
+  floorFont = lg.newFont("/assets/Acme-Regular.ttf", 30)
+  lilFont = lg.newFont("/assets/BenchNine-Regular.ttf", 20)
   
   showEodOverlay = false
   allOpened = false
@@ -145,21 +171,23 @@ function C.init()
     lg.newQuad(0, 64, 105, 32, 105, 96)
     }
   
+  colorTextDisplayTime = 2
+  
 end
 
 function C.update()
   
   local mx, my = love.mouse.getPosition()
   
-  CheckHoverStates(mx, my)
-  
   if currentScene == Scenes.FARM and not showEodOverlay then
+    CheckHoverStates(mx, my)
     F.update()
+    currentCrops = F.getCurrentPlantInfo()
+    showEodOverlay = F.getComplete() or F.getTimeUp()
+    if showEodOverlay then
+      timeAtEnd = F.getTimeUp()
+    end
   end
-  
-  currentCrops = F.getCurrentPlantInfo()
-  
-  showEodOverlay = F.getComplete() or F.getTimeUp()
   
   if currentScene == Scenes.FAIR then
     if CF.checkPlaced() then
@@ -167,30 +195,45 @@ function C.update()
     end
   end
   
+  if dog.textTimer then
+    local timeElapsed = love.timer.getTime() - dog.textTimer
+    if timeElapsed > colorTextDisplayTime then
+      dog.textTimer = false
+    end
+  end
+  
+  if scarecrow.textTimer then
+    local timeElapsed = love.timer.getTime() - scarecrow.textTimer
+    if timeElapsed > colorTextDisplayTime then
+      scarecrow.textTimer = false
+    end
+  end
   
 end
 
 function C.draw()
   
   if currentScene == Scenes.FARM then
-    
     DrawFarm()
-    
     if showEodOverlay then
-      DrawEODOverlay(true)
+      DrawEODOverlay(not timeAtEnd)
     end
-    
   elseif currentScene == Scenes.BARN then
-    
     DrawBarn()
-    
   elseif currentScene == Scenes.MORNING then
-    
     DrawSeedSelection()
-    
   elseif currentScene == Scenes.FAIR then
     DrawFair()
-    
+  elseif currentScene == Scenes.TITLE then
+    lg.draw(titleScreen)
+  elseif currentScene == Scenes.INTRO then
+    lg.draw(intro1Screen)
+  elseif currentScene == Scenes.INTRO2 then
+    lg.draw(intro2Screen)
+  elseif currentScene == Scenes.PREFAIR then
+    lg.draw(preFairBg)
+  elseif currentScene == Scenes.PAUSE then
+    lg.draw(pauseScreen)
   end
   
 end
@@ -228,7 +271,7 @@ function DrawFair()
   
   if confirmFinished then
     lg.setFont(dialogFont)
-    lg.printf("You finished your story - press 'enter' to submit and get your score!", 10, 580, 790, "center")
+    lg.printf("You finished your story - press 'enter' to submit and get your score!", 10, 580, 780, "center")
     lg.reset()
   end
   
@@ -332,9 +375,16 @@ end
 
 function DrawEODOverlay(finishedEarly)
   
+  local daysLeft = F.getDaysLeft
+  local bottomText = "Great! Now press 'enter' to continue to the barn."
+  
+  if daysLeft <= 1 then
+    bottomText = "Great - that was our last harvest! Press 'enter' to go to the fair!"
+  end
+  
   lg.reset()
   lg.setFont(dialogFont)
-  local text = "THat's it for the day's harvest!"
+  local text = "That's it for the day's harvest!"
   
   lg.draw(eodOverlay)
   if finishedEarly then
@@ -350,7 +400,7 @@ function DrawEODOverlay(finishedEarly)
 
   for k, v in ipairs(currentCrops) do
     local c = v.cropNum
-    if v.plantStage <= 4 then
+    if v.plantStage < 4 then
       c = c + 6
     elseif not v.harvested and v.plantStage >= 5 then
       c = c + 3
@@ -359,14 +409,20 @@ function DrawEODOverlay(finishedEarly)
     lg.draw(fruitSprites, fruitQuads[c], overlayLocations[k].x, overlayLocations[k].y)
     
     if v.opened then
-      if v.plantStage <= 4 then
+      if v.plantStage < 4 then
         c = c - 6
       end
-      lg.draw(fruitSprites, fruitQuads[c+9], overlayLocations[k].x+100, overlayLocations[k].y-20)
+      lg.draw(fruitSprites, fruitQuads[c+9], overlayLocations[k].x+110, overlayLocations[k].y-20)
       
-      lg.setColor(17/225, 80/225, 15/225) 
-      lg.setFont(plantFont)
-      lg.printf(v.goodWord, overlayLocations[k].x+105, overlayLocations[k].y + 50, 100, "center")
+      lg.setColor(17/225, 80/225, 15/225)
+      
+      
+      if #v.word >= 10 then
+        lg.setFont(plantFontSm)
+      else
+        lg.setFont(plantFont)
+      end
+      lg.printf(v.word, overlayLocations[k].x+112, overlayLocations[k].y + 50, 100, "center")
       lg.reset()
     else
       allOpenedL = false
@@ -377,7 +433,7 @@ function DrawEODOverlay(finishedEarly)
     allOpened = true
     lg.setColor(17/225, 80/225, 15/225) 
     lg.setFont(dialogFont)
-    lg.printf("Great! Now press 'enter' to continue to the barn.", 52, 430, 600, "left")
+    lg.printf(bottomText, 52, 430, 600, "left")
     lg.reset()
   end
   
@@ -386,7 +442,13 @@ end
 function FinishDay()
   
   showEodOverlay = false
-  F.finishFarmDay()
+  local daysLeft = F.finishFarmDay()
+  if daysLeft == 0 then
+    currentScene = Scenes.PREFAIR
+    CF.startFair()
+  else
+    currentScene = Scenes.BARN
+  end
   
 end
 
@@ -427,14 +489,57 @@ function DrawFarm()
     if v.harvested then
       lg.draw(cropBadges, doneBadge, crops[k].x + xOffset, crops[k].y + yOffset)
     end
+    if TEST then
+        lg.setFont(timerFont)
+        lg.setColor(0, 0, 0)
+        lg.printf(v.score, crops[k].x + xOffset, crops[k].y + yOffset, 100, "center")
+        lg.reset()
+      end
   end
   
-  lg.setFont(dialogFont)
-  lg.printf(math.floor(F.getTimeLeft()), 610, 529, 50, "left")
+  if not showEodOverlay then
+    lg.setFont(timerFont)
+    lg.setColor(0, 0, 0)
+    lg.printf(math.floor(F.getTimeLeft()), 612, 523, 50, "center")
+  end
+  local daysLeft = F.getDaysLeft()
+  local txt = ""
+  if daysLeft == 3 then
+    txt = "Day 1 of 3"
+  elseif daysLeft == 2 then
+    txt = "Day 2 of 3"
+  elseif daysLeft == 1 then
+    txt = "Last day!"
+  end
+  lg.setColor(1, 1, 1)
+  lg.setFont(floorFont)
+  lg.printf(txt, 100, 100, 180, "center")
+  lg.reset()
+  
+  if dog.textTimer then
+    lg.setFont(lilFont)
+    lg.printf("- "..dog.textChosen, 630, 372, 200, "left")
+  end
+  
+  if scarecrow.textTimer then
+    lg.setFont(lilFont)
+    lg.printf(scarecrow.textChosen.." -", 560, 474, 140, "right")
+  end
   
   local cd = F.getCurrentlyDragging()
   if cd ~= nil then
     ShowDraggingItem(cd)
+  end
+  
+  local countdown = F.getTimeLeft()
+  if countdown > 61 then
+    lg.setColor(69/255, 130/255, 37/255)
+    lg.rectangle("fill", 0, 0, 800, 600)
+    lg.setColor(1, 1, 1)
+    lg.setFont(timerBigFont)
+    lg.printf("Get ready...", 0, 200, 800, "center")
+    lg.printf(math.floor(countdown-60), 0, 300, 800, "center")
+    lg.reset()
   end
   
 end
@@ -448,6 +553,8 @@ function GetTimeLeftBadge(t)
       return i
     end
   end
+  
+  return 8
   
   
 end
@@ -512,6 +619,7 @@ function C.handleMouseClick(mx, my)
     for k, v in ipairs(currentCrops) do
       if U.detectOverlap(overlayLocations[k].x, overlayLocations[k].y, overlayLocations[k].x+ overlayLocations[k].w, overlayLocations[k].y+overlayLocations[k].w, mx, my) then
         v.opened = true
+        return
       end
     end
     return
@@ -548,6 +656,7 @@ function C.handleMouseClick(mx, my)
     return
   elseif currentScene == Scenes.FAIR then
     CF.handleMouseClick(mx, my)
+    return
   end
   
   --truck
@@ -555,10 +664,14 @@ function C.handleMouseClick(mx, my)
     F.handleMouseClick("truck", nil)
   --dog
   elseif U.detectOverlap(dog.x, dog.y, dog.x2, dog.y2, mx, my) then
-    F.handleMouseClick("dog", nil)
+    dog.textTimer = love.timer.getTime()
+    local r = love.math.random(#dog.textOptions)
+    dog.textChosen = dog.textOptions[r]
   --scarecrow
   elseif U.detectOverlap(scarecrow.x, scarecrow.y, scarecrow.x2, scarecrow.y2, mx, my) then
-    F.handleMouseClick("scarecrow", nil)
+    scarecrow.textTimer = love.timer.getTime()
+    local r = love.math.random(#scarecrow.textOptions)
+    scarecrow.textChosen = scarecrow.textOptions[r]
     --well
   elseif U.detectOverlap(well.x, well.y, well.x2, well.y2, mx, my) then
     F.handleMouseClick("well", nil)
@@ -600,17 +713,34 @@ end
 function C.handleKeyPress(k)
   
   if showEodOverlay and currentScene == Scenes.FARM and allOpened and k == "return" then
-    F.finishFarmDay()
-    currentScene = Scenes.BARN
-  elseif currentScene == Scenes.INTRO and k == "return" then
+    FinishDay()
+  elseif currentScene == Scenes.FARM and k == "escape" then
+    currentScene = Scenes.PAUSE
+    F.pauseScene(true)
+  elseif currentScene == Scenes.PAUSE and (k == "escape" or k == "return") then
     currentScene = Scenes.FARM
+    F.pauseScene(false)
+  elseif currentScene == Scenes.INTRO and k == "return" then
+    currentScene = Scenes.INTRO2
   elseif currentScene == Scenes.TITLE and k == "return" then
     currentScene = Scenes.INTRO
+  elseif currentScene == Scenes.INTRO2 and k == "return" then
+    StartDay()
+    currentScene = Scenes.FARM
   elseif currentScene == Scenes.BARN and k == "return" then
+    StartDay()
     currentScene = Scenes.MORNING
+  elseif currentScene == Scenes.PREFAIR and k == "return" then
+    currentScene = Scenes.FAIR
   elseif currentScene == Scenes.FAIR and confirmFinished then
     currentScene = Scenes.RESULTS
   end
+  
+end
+
+function StartDay()
+  
+  F.startDay()
   
 end
 
@@ -669,6 +799,16 @@ function InitObjectPlacement()
   dog.y = 400
   dog.x2 = 675
   dog.y2 = 467
+  dog.textTimer = false
+  dog.textChosen = nil
+  dog.textOptions = 
+  {
+    "woof! i love words!",
+    "bork, my name's willow!",
+    "this fertilizer smells GOOD",
+    "can i have a snack?",
+    "words need water to grow!"
+    }
   
   barn.x = 485
   barn.y = 0
@@ -679,6 +819,16 @@ function InitObjectPlacement()
   scarecrow.y = 467
   scarecrow.x2 = 755
   scarecrow.y2 = 580
+  scarecrow.textTimer = false
+  scarecrow.textChosen = nil
+  scarecrow.textOptions = 
+  {
+    "my back is itchy",
+    "no birds here!",
+    "why do u click so much",
+    "i'm so fashionable",
+    "i'm standing guard!"
+    }
   
   local cropX = 65
   local cropY = 225

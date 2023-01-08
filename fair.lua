@@ -1,4 +1,5 @@
 U = require "utils"
+F = require "farm"
 
 CF = {}
 
@@ -36,7 +37,7 @@ function CF.init()
 {'ad',7,false,201,439,false}}
 
   if TEST then
-    testCompletedPlants = U.createTestCompletedPlants()
+    completedPlants = U.createTestCompletedPlants()
     CF.placeInTray()
   end
   
@@ -48,6 +49,13 @@ function CF.update()
 
   CF.updateTray()
 
+end
+
+function CF.startFair(plants)
+  
+  completedPlants = F.getAllPlants()
+  CF.placeInTray()
+  
 end
 
 function CF.updateTray()
@@ -95,7 +103,7 @@ function CF.placeInTray()
   local xIncr = 110
   local yIncr = 36
   local i = 0
-  for k, v in ipairs(testCompletedPlants) do
+  for k, v in ipairs(completedPlants) do
     table.insert(stillInTray, {id = v.id, x = x + xIncr*i, y = y + yIncr, c = v.cropNum, w = v.word, altw = v.altWord, inTray = true, addCoords = {}, alt = false})
     if x + xIncr*i > 600 then
       y = y + yIncr

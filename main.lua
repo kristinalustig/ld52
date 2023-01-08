@@ -8,7 +8,7 @@ lg = love.graphics
 la = love.audio
 lm = love.mouse
 
-TEST = true
+TEST = false
 
 Scenes = 
 {
@@ -21,7 +21,10 @@ Scenes =
   BARN = 6,
   MORNING = 7,
   FAIR = 8,
-  RESULTS = 9
+  RESULTS = 9,
+  PREFAIR = 10,
+  INTRO2 = 11,
+  PAUSE = 12
   
 }
 
@@ -30,7 +33,7 @@ currentScene = nil
 
 function love.load()
   
-  currentScene = Scenes.FARM
+  currentScene = Scenes.TITLE
   
   C.init()
   W.init()

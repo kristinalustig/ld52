@@ -14,6 +14,7 @@ local startTime
 local timePerTask
 local isComplete
 local completedPlants = {}
+local testCompletedPlants = {}
 
 function F.init()
   

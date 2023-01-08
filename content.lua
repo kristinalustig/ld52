@@ -1,5 +1,6 @@
 local F = require "farm"
 local U = require "utils"
+local CF = require "fair"
 
 C = {}
 
@@ -20,9 +21,10 @@ local titleScreen --image TODO
 local nightScreen --image
 local seedChoiceScreen --image
 local fairScreen --image
-local scoreScreen --image TODO
+local scoreScreen --image
 local doneBadge --quad
 local eodOverlay
+local wordCards --image
 
 --sprite quad tables
 local cropQuads = {}
@@ -60,10 +62,12 @@ local resultBadges = {}
 local overlayLocations = {}
 local seedsToPlant = {}
 local seedButtonLocs = {}
+local wordCardQuads = {}
 
 --bools
 local showEodOverlay
 local allOpened
+local confirmFinished
 
 function C.init()
   
@@ -79,10 +83,11 @@ function C.init()
   wellHighlight = lg.newImage("/assets/well-highlight.png")
   truckHighlight = lg.newImage("/assets/truck-highlight.png")
   manureBlob = lg.newImage("/assets/manure.png")
-  fairScreen = lg.newImage("/assets/fair-screen.png")
+  fairScreen = lg.newImage("/assets/fair-screen-a.png")
   nightScreen = lg.newImage("/assets/night-screen.png")
   seedChoiceScreen = lg.newImage("/assets/seed-choice-screen.png")
   eodOverlay = lg.newImage("/assets/eod-overlay.png")
+  wordCards = lg.newImage("/assets/wordCards.png")
   
   doneBadge = lg.newQuad(0, 0, 80, 80, 720, 160)
   
@@ -91,6 +96,7 @@ function C.init()
   
   showEodOverlay = false
   allOpened = false
+  confirmFinished = false
   
   InitCropQuads()
   InitFruitQuads()
@@ -133,6 +139,12 @@ function C.init()
       y2 = 512}}
   }
   
+  wordCardQuads = {
+    lg.newQuad(0, 0, 105, 32, 105, 96),
+    lg.newQuad(0, 32, 105, 32, 105, 96),
+    lg.newQuad(0, 64, 105, 32, 105, 96)
+    }
+  
 end
 
 function C.update()
@@ -148,6 +160,13 @@ function C.update()
   currentCrops = F.getCurrentPlantInfo()
   
   showEodOverlay = F.getComplete() or F.getTimeUp()
+  
+  if currentScene == Scenes.FAIR then
+    if CF.checkPlaced() then
+      confirmFinished = true
+    end
+  end
+  
   
 end
 
@@ -169,6 +188,48 @@ function C.draw()
     
     DrawSeedSelection()
     
+  elseif currentScene == Scenes.FAIR then
+    DrawFair()
+    
+  end
+  
+end
+
+
+function DrawFair()
+  
+  lg.draw(fairScreen)
+  
+  local inTray = CF.getStillInTray()
+  
+  for k, v in ipairs(inTray) do
+    local w = v.w
+    if v.alt then
+      w = v.altw
+    end
+    lg.draw(wordCards, wordCardQuads[v.c], v.x, v.y)
+    lg.setColor(0, 0, 0)
+    lg.printf(w, v.x, v.y+10, 105, "center")
+    lg.reset()
+    if #v.addCoords > 0 then
+      for k1, v1 in ipairs(v.addCoords) do
+        local w1 = v.w
+        if v1[3] then
+          w1 = v.altw
+        end
+        lg.draw(wordCards, wordCardQuads[v.c], v1[1], v1[2])
+        lg.setColor(0, 0, 0)
+        lg.printf(w1, v1[1], v1[2]+10, 105, "center")
+        lg.reset()
+      end
+    end
+    lg.reset()
+  end
+  
+  if confirmFinished then
+    lg.setFont(dialogFont)
+    lg.printf("You finished your story - press 'enter' to submit and get your score!", 10, 580, 790, "center")
+    lg.reset()
   end
   
 end
@@ -485,6 +546,8 @@ function C.handleMouseClick(mx, my)
       F.newDaySetup(seedsToPlant)
     end
     return
+  elseif currentScene == Scenes.FAIR then
+    CF.handleMouseClick(mx, my)
   end
   
   --truck
@@ -513,6 +576,11 @@ end
 
 function C.handleMouseRelease(mx, my)
   
+  if currentScene == Scenes.FAIR then
+    CF.handleMouseRelease(mx, my)
+    return
+  end
+  
   --barn
   if U.detectOverlap(barn.x, barn.y, barn.x2, barn.y2, mx, my) then
     F.handleMouseRelease("barn", nil)
@@ -540,6 +608,8 @@ function C.handleKeyPress(k)
     currentScene = Scenes.INTRO
   elseif currentScene == Scenes.BARN and k == "return" then
     currentScene = Scenes.MORNING
+  elseif currentScene == Scenes.FAIR and confirmFinished then
+    currentScene = Scenes.RESULTS
   end
   
 end

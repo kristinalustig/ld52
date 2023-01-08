@@ -41,18 +41,22 @@ function W.getWord(plantType, currentTheme, goodWord)
   
   local wordFound = false
   local word = nil
+  local altWord = nil
   local tries = 0
   
   while wordFound == false and tries < 10 do
     if plantType == "noun" then
       local r = love.math.random(#nounTable[useTheme])
       word = nounTable[useTheme][r][2]
+      altWord = nounTable[useTheme][r][3]
     elseif plantType == "ad" then
       local r = love.math.random(#adTable[useTheme])
       word = adTable[useTheme][r][2]
+      altWord = adTable[useTheme][r][3]
     elseif plantType == "verb" then
       local r = love.math.random(#verbTable[useTheme])
       word = verbTable[useTheme][r][2]
+      altWord = verbTable[useTheme][r][3]
     end
     
     if not WordUsed(word) then
@@ -63,7 +67,7 @@ function W.getWord(plantType, currentTheme, goodWord)
   end
   
   table.insert(wordsUsed, word)
-  return word
+  return word, altWord
   
 end
 

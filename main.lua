@@ -30,7 +30,7 @@ currentScene = nil
 
 function love.load()
   
-  currentScene = Scenes.FAIR
+  currentScene = Scenes.FARM
   
   C.init()
   W.init()

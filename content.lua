@@ -277,13 +277,13 @@ end
 
 function GetScoreBadge(s)
   
-  if s > 100 then
+  if s > 1000 then
     --A
     return badgeQuads[1]
-  elseif s > 80 then
+  elseif s > 800 then
     --B
     return badgeQuads[2]
-  elseif s > 60 then
+  elseif s > 600 then
     return badgeQuads[3]
   else
     --D

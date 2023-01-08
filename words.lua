@@ -31,6 +31,44 @@ function W.init()
   
 end
 
+function W.getAltWord(plantType, word)
+  
+  if plantType == "noun" then
+    for k, v in ipairs(nounTable[1]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+    for k, v in ipairs(nounTable[2]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+  elseif plantType == "ad" then
+    for k, v in ipairs(adTable[1]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+    for k, v in ipairs(adTable[2]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+  elseif plantType == "verb" then
+    for k, v in ipairs(verbTable[1]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+    for k, v in ipairs(verbTable[2]) do
+      if v[2] == word then
+        return v[3]
+      end
+    end
+  end
+end
+
 --gets a word from the available list for the current theme
 function W.getWord(plantType, currentTheme, goodWord)
   
@@ -67,7 +105,7 @@ function W.getWord(plantType, currentTheme, goodWord)
   end
   
   table.insert(wordsUsed, word)
-  return word, altWord
+  return word
   
 end
 

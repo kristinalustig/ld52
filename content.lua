@@ -720,6 +720,10 @@ function C.handleMouseClick(mx, my)
     return
   end
   
+  if currentScene ~= Scenes.FARM then
+    return
+  end
+  
   --truck
   if U.detectOverlap(truck.x, truck.y, truck.x2, truck.y2, mx, my) then
     F.handleMouseClick("truck", nil)

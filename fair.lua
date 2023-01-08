@@ -62,7 +62,7 @@ function CF.getThemeCoords()
   
   local tempTable = {}
   for k, v in ipairs(theme1Coords) do
-    tempTable.insert({
+    table.insert(tempTable, {
         plantType = v[1]
       })
     end

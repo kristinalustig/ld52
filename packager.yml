@@ -1,5 +1,5 @@
-name: ld52
-version: 0.0.1
+name: wordsalad
+version: 0.1.0
 assets:
   - "*.lua"
   - assets/**/*

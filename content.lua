@@ -824,7 +824,11 @@ function FormatResults(r)
       local c = CF.getCardById(v[6])
       local w = c.w
       if v[3] == true then
-        w = c.altw
+        if c.altw ~= nil then
+          w = c.altw
+        else
+          w = c.w
+        end
       end
       str = str..w
     else

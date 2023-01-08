@@ -305,7 +305,7 @@ function DrawFair()
     end
     lg.draw(wordCards, wordCardQuads[v.c], v.x, v.y)
     lg.setColor(0, 0, 0)
-    if #w == 0 then
+    if w == nil then
       w = v.w
     end
     lg.printf(w, v.x, v.y+10, 105, "center")
@@ -318,7 +318,7 @@ function DrawFair()
         end
         lg.draw(wordCards, wordCardQuads[v.c], v1[1], v1[2])
         lg.setColor(0, 0, 0)
-        if #w1 == 0 then
+        if w1 == nil then
           w1 = v.w
         end
         lg.printf(w1, v1[1], v1[2]+10, 105, "center")

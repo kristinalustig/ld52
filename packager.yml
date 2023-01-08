@@ -1,0 +1,5 @@
+name: ld52
+version: 0.0.1
+assets:
+  - "*.lua"
+  - assets/**/*
